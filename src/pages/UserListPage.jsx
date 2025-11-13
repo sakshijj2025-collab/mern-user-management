@@ -39,15 +39,22 @@ const UserListPage = () => {
     loadUsers();
   }, []);
 
-  // Search + Filter
-  const normalizedSearch = searchTerm.toLowerCase();
+  // 🔍 Search + Filter (fixed behaviour)
+  const normalizedSearch = searchTerm.trim().toLowerCase();
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(normalizedSearch) ||
-      user.email.toLowerCase().includes(normalizedSearch);
+    const username = (user.name || "").toLowerCase();
+    const email = (user.email || "").toLowerCase();
+    const emailLocalPart = email.split("@")[0]; // only part before @
 
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    // if search box empty → match everything
+    const matchesSearch =
+      !normalizedSearch ||
+      username.startsWith(normalizedSearch) ||
+      emailLocalPart.startsWith(normalizedSearch);
+
+    const matchesRole =
+      roleFilter === "all" || user.role === roleFilter;
 
     return matchesSearch && matchesRole;
   });
@@ -63,6 +70,7 @@ const UserListPage = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
 
+  // Delete modal
   const openDeleteModal = (user) => setDeleteTarget(user);
   const closeDeleteModal = () => setDeleteTarget(null);
 
@@ -70,9 +78,7 @@ const UserListPage = () => {
     if (!deleteTarget) return;
     try {
       await deleteUser(deleteTarget.id);
-
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-
       toast.success("User deleted successfully");
     } catch (err) {
       toast.error(
@@ -87,7 +93,6 @@ const UserListPage = () => {
 
   return (
     <div className="space-y-4">
-
       {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-300">
@@ -245,7 +250,7 @@ const UserListPage = () => {
         ))}
       </div>
 
-      {/* Pagination */}
+      {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 my-4">
           <button
