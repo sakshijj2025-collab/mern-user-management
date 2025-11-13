@@ -1,76 +1,75 @@
-import { Outlet, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
+import ConfirmModal from "./ConfirmModal";
 
 const Layout = () => {
   const { user, logout } = useAuth();
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem('theme') || 'light'
-  );
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [theme]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-      <header className="bg-white shadow dark:bg-gray-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link
-            to="/users"
-            className="text-xl font-semibold text-indigo-600 dark:text-indigo-400"
-          >
-            User Management
-          </Link>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
 
-          <div className="flex items-center gap-4">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
-            </button>
+      {/* NAVBAR */}
+      <div className="bg-white dark:bg-gray-800 shadow px-4 py-3 flex items-center justify-between">
 
-            {user && (
-              <>
-                <div className="flex items-center gap-2">
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                  <div className="text-sm">
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={logout}
-                  className="rounded-md border border-indigo-600 px-3 py-1 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
-                >
-                  Logout
-                </button>
-              </>
-            )}
+        <h1 className="text-xl font-bold text-indigo-600">
+          User Management
+        </h1>
+
+        <div className="flex items-center gap-4">
+
+          {/* USER SECTION */}
+          <div className="flex items-center gap-2">
+            <img
+              src={user?.avatar}
+              className="h-9 w-9 rounded-full border object-cover"
+              alt="profile"
+            />
+            <div className="hidden sm:block leading-tight">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {user?.name}
+              </p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+            </div>
           </div>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6">
+          {/* LOGOUT BUTTON */}
+          <button
+            onClick={handleLogout}
+            className="border border-indigo-600 text-indigo-600 px-3 py-1.5 rounded-md hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-300"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      {/* PAGE CONTENT */}
+      <div className="p-4">
         <Outlet />
-      </main>
+      </div>
+
+      {/* LOGOUT POPUP */}
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        confirmColor="indigo"
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 };

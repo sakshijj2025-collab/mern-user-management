@@ -13,13 +13,13 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        {/* Global toast container */}
-        <Toaster position="top-right" reverseOrder={false} />
+        <Toaster position="top-right" />
+
         <Routes>
-          {/* Public route */}
+          {/* Public */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected routes */}
+          {/* Protected */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Navigate to="/users" replace />} />
@@ -32,6 +32,7 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/users" replace />} />
         </Routes>
+
       </BrowserRouter>
     </AuthProvider>
   );

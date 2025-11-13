@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { createUser, getUserById, updateUser } from '../api/platziClient';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { createUser, getUserById, updateUser } from "../api/platziClient";
+import toast from "react-hot-toast";
 
 const initialState = {
-  name: '',
-  email: '',
-  password: '',
-  avatar: '',
-  role: 'customer',
+  name: "",
+  email: "",
+  password: "",
+  avatar: "",
+  role: "customer",
 };
 
 const UserFormPage = () => {
@@ -18,32 +18,28 @@ const UserFormPage = () => {
 
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(isEdit);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const res = await getUserById(id);
-        const user = res.data;
         setForm({
-          name: user.name || '',
-          email: user.email || '',
-          password: '',
-          avatar: user.avatar || '',
-          role: user.role || 'customer',
+          name: res.data.name,
+          email: res.data.email,
+          password: "",
+          avatar: res.data.avatar,
+          role: res.data.role,
         });
       } catch (err) {
-        console.error(err);
-        setError('Failed to load user');
-        toast.error('Failed to load user');
+        setError(err.message);
+        toast.error(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (isEdit) {
-      loadUser();
-    }
+    if (isEdit) loadUser();
   }, [id, isEdit]);
 
   const handleChange = (e) =>
@@ -51,114 +47,107 @@ const UserFormPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+
     try {
       if (isEdit) {
-        const body = { ...form };
-        if (!body.password) {
-          delete body.password;
-        }
-        await updateUser(id, body);
-        toast.success('User updated successfully ✅');
+        const updated = { ...form };
+        if (!updated.password) delete updated.password;
+
+        await updateUser(id, updated);
+        toast.success("User updated");
       } else {
         await createUser(form);
-        toast.success('User created successfully 🎉');
+        toast.success("User created");
       }
-      navigate('/users');
+      navigate("/users");
+
     } catch (err) {
-      console.error(err);
-      setError('Failed to save user. Please check fields.');
-      toast.error('Failed to save user ❌');
+      setError(err.message);
+      toast.error(err.message);
     }
   };
 
-  if (loading) {
-    return <p className="text-center text-gray-600">Loading user…</p>;
-  }
+  if (loading) return <p className="text-center">Loading user…</p>;
 
   return (
-    <div className="mx-auto max-w-xl rounded-lg bg-white p-6 shadow">
-      <h1 className="mb-4 text-xl font-bold text-indigo-600">
-        {isEdit ? 'Edit User' : 'Add User'}
+    <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+
+      <h1 className="text-xl font-bold text-indigo-600 mb-4">
+        {isEdit ? "Edit User" : "Add User"}
       </h1>
 
       {error && (
-        <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mb-3 bg-red-100 text-red-700 px-3 py-2 rounded-md">
           {error}
         </p>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Name
-          </label>
+          <label className="text-sm font-medium">Name</label>
           <input
             name="name"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={form.name}
             onChange={handleChange}
             required
+            className="w-full border px-3 py-2 rounded-md"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Email
-          </label>
+          <label className="text-sm font-medium">Email</label>
           <input
             type="email"
             name="email"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={form.email}
             onChange={handleChange}
             required
+            className="w-full border px-3 py-2 rounded-md"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Password {isEdit && '(leave blank to keep current)'}
+          <label className="text-sm font-medium">
+            Password {isEdit && "(leave blank to keep old)"}
           </label>
           <input
             type="password"
             name="password"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={form.password}
             onChange={handleChange}
             required={!isEdit}
+            className="w-full border px-3 py-2 rounded-md"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Avatar URL
-          </label>
+          <label className="text-sm font-medium">Avatar URL</label>
           <input
             name="avatar"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={form.avatar}
             onChange={handleChange}
             required
+            className="w-full border px-3 py-2 rounded-md"
           />
+
           {form.avatar && (
             <img
               src={form.avatar}
-              alt="Avatar preview"
-              className="mt-2 h-16 w-16 rounded-full object-cover"
+              alt="Avatar"
+              className="h-16 w-16 mt-2 rounded-full object-cover"
             />
           )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Role
-          </label>
+          <label className="text-sm font-medium">Role</label>
           <select
             name="role"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             value={form.role}
             onChange={handleChange}
+            className="w-full border px-3 py-2 rounded-md"
           >
             <option value="customer">Customer</option>
             <option value="admin">Admin</option>
@@ -168,18 +157,17 @@ const UserFormPage = () => {
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            onClick={() => navigate('/users')}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            onClick={() => navigate("/users")}
+            className="border px-4 py-2 rounded-md"
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
+
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded-md">
             Save
           </button>
         </div>
+
       </form>
     </div>
   );

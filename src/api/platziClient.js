@@ -1,33 +1,33 @@
-import axios from 'axios';
+// src/api/platziClient.js
+import axios from "axios";
 
-const API_BASE_URL = 'https://api.escuelajs.co/api/v1';
-
-const platziClient = axios.create({
-  baseURL: API_BASE_URL,
+const api = axios.create({
+  baseURL: "https://api.escuelajs.co/api/v1",
 });
 
-// Attach token from localStorage to every request
-platziClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// GLOBAL API ERROR HANDLING
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    let message = "Something went wrong";
+
+    if (err.response?.data?.message) {
+      message = err.response.data.message;
+    } else if (err.message) {
+      message = err.message;
+    }
+
+    return Promise.reject(new Error(message));
   }
-  return config;
-});
+);
 
-// AUTH
-export const login = (email, password) =>
-  platziClient.post('/auth/login', { email, password });
+// LOGIN
+export const loginUser = (email, password) =>
+  api.post("/auth/login", { email, password });
 
 // USERS CRUD
-export const getUsers = () => platziClient.get('/users');
-
-export const getUserById = (id) => platziClient.get(`/users/${id}`);
-
-export const createUser = (user) => platziClient.post('/users', user);
-
-export const updateUser = (id, user) => platziClient.put(`/users/${id}`, user);
-
-export const deleteUser = (id) => platziClient.delete(`/users/${id}`);
-
-export default platziClient;
+export const getUsers = () => api.get("/users");
+export const getUserById = (id) => api.get(`/users/${id}`);
+export const createUser = (data) => api.post("/users", data);
+export const updateUser = (id, data) => api.put(`/users/${id}`, data);
+export const deleteUser = (id) => api.delete(`/users/${id}`);

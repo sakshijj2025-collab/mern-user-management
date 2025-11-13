@@ -1,75 +1,172 @@
-# User Management System (React + Tailwind + Platzi API)
+# User Management System (Frontend)
 
-A frontend-first **User Management System** built with **React**, **Tailwind CSS**, and **Platzi Fake Store API**.  
-The app demonstrates:
+A fully responsive **User Management System** built with **React + Tailwind CSS**, integrated with the **Platzi API** for authentication and user CRUD operations.
 
-- JWT-based **Login / Logout**
-- **Protected routes** using React Router and Context
-- Full **User CRUD** (Create, Read, Update, Delete)
-- **Search, Filter, Pagination**
-- **Toast notifications** and **confirmation modal**
-- Responsive, clean UI with **Tailwind**
+This project supports:
 
----
+- 🔐 Login / Logout (JWT Authentication)
+- 🔒 Protected Routes
+- 👤 User CRUD (Create, Read, Update, Delete)
+- 📱 Fully Responsive UI (Desktop + Mobile)
+- 🔍 Search + Filter by Role
+- 📄 Pagination
+- 🖼 Avatar Preview
+- 🌙 Dark Mode (Optional)
+- ⚠ Error handling with toast notifications
 
-## 🚀 Features
 
-### Authentication
+## 🏗 Tech Stack
 
-- Login using Platzi API:
+### **Frontend**
+- React (Vite)
+- React Router DOM
+- Context API for authentication
+- Axios for API calls
+- Tailwind CSS
+- react-hot-toast
+- Modern responsive layout (mobile + desktop)
 
-  `POST https://api.escuelajs.co/api/v1/auth/login`
 
-- JWT stored in `localStorage`
-- Auth state managed via **Context API**
-- Protected routes (only accessible when logged in)
-- Logout clears token + redirects to login
+## 📌 Requirements (Assignment Overview)
 
-### Users Management (CRUD)
+### **Authentication**
+Use Platzi Login API:
+POST https://api.escuelajs.co/api/v1/auth/login
 
-Uses `https://api.escuelajs.co/api/v1/users`:
+Store token in **localStorage** and protect routes.
 
-- `GET /users` – Fetch all users (list view)
-- `GET /users/:id` – Load single user for edit
-- `POST /users` – Create new user
-- `PUT /users/:id` – Update existing user
-- `DELETE /users/:id` – Delete user
+### **User CRUD**
+Use Platzi Users API:
 
-UI includes:
+GET /users
 
-- User list in responsive table
-- Add User form
-- Edit User form
-- Delete action with confirmation modal
+GET /users/:id
 
-### UX Enhancements
+POST /users
 
-- 🔍 Search by **name or email**
-- 🎯 Filter by **role** (`all / customer / admin`)
-- 📄 Pagination (client-side) with page numbers & prev/next
-- 🍞 Toast notifications on create/update/delete/load errors (react-hot-toast)
-- 💡 Skeleton loader for users table
-- 🌗 Dark mode toggle (light/dark theme)
-- Mobile-first responsive layout
+PUT /users/:id
 
----
+DELETE /users/:id
 
-## 🛠 Tech Stack
 
-- **React 18+**
-- **React Router v6**
-- **Context API** for authentication state
-- **Axios** for HTTP calls
-- **Tailwind CSS** for styling
-- **react-hot-toast** for toast notifications
-- Vite as bundler
+### **Frontend Pages**
+| Page | Description |
+|------|-------------|
+| Login Page | Email + Password login using JWT |
+| User List | Table + mobile card view with pagination, search, filter |
+| Add User | Create new user |
+| Edit User | Update user |
+| Delete User | Modal confirmation |
 
 ---
 
-## 📦 Getting Started
 
-### 1. Clone the repo
+## ⚙️ Setup Instructions
 
-```bash
-git clone <YOUR_REPO_URL>
+### 1️⃣ Clone the repo
+git clone git@github.com:sakshijj2025-collab/mern-user-management.git
 cd mern-user-management
+
+
+### 2️⃣ Install dependencies
+npm install
+
+### 3️⃣ Setup Tailwind (already configured)
+npx tailwindcss init -p
+
+
+### 4️⃣ Run the app
+npm run dev
+
+
+## 🔑 Login Credentials (for testing)
+
+Platzi's public test user:
+
+Email: john@mail.com
+Password: changeme
+
+
+Or create your own user using:
+POST https://api.escuelajs.co/api/v1/users
+
+---
+
+## 🔥 Features Explained
+
+### ✔ Authentication (JWT)
+- Login using `/auth/login`
+- Retrieve user profile `/auth/profile`
+- Token saved in `localStorage`
+- Logout clears all stored data
+
+### ✔ Protected Routes
+- Users can access `/users`, `/users/new`, `/users/:id` only if logged in
+
+### ✔ User List
+- Search by name or email
+- Filter by role
+- Pagination
+- Mobile card layout
+- Delete popup modal
+- Edit button
+- Avatar display
+
+### ✔ Add / Edit User
+- Form fields: name, email, password, avatar, role
+- Avatar preview
+- Handles API validation errors
+- Update user without forcing password change
+
+---
+
+## 🧪 API Endpoints Used
+
+### **Authentication**
+| Method | Endpoint | Purpose |
+|--------|----------|----------|
+| POST | `/auth/login` | Get JWT Token |
+| GET | `/auth/profile` | Logged-in user profile |
+
+### **Users**
+| Method | Endpoint | Purpose |
+|--------|----------|----------|
+| GET | `/users` | Get all users |
+| GET | `/users/:id` | Get specific user |
+| POST | `/users` | Create new user |
+| PUT | `/users/:id` | Update user |
+| DELETE | `/users/:id` | Delete user |
+
+---
+
+## 🔐 ProtectedRoute Logic
+
+- If no token → redirect to `/login`
+- If token exists → continue to page
+
+---
+
+
+## 📌 Git Commit Rules
+
+### First commit:
+git commit -m "INITIAL COMMIT"
+
+
+### Final commit after completing assignment:
+git commit -m "TASK COMPLETED"
+
+
+---
+
+## 👨‍💻 Author
+**Sakshi Jain**  
+React Full Stack Developer  
+
+---
+
+## 📄 License
+This project is open-source for learning and assignment purposes.
+
+---
+

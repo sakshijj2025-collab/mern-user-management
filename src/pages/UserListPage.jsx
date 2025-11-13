@@ -1,40 +1,35 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getUsers, deleteUser } from '../api/platziClient';
-import toast from 'react-hot-toast';
-import UserTableSkeleton from '../components/UserTableSkeleton';
-import ConfirmModal from '../components/ConfirmModal';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getUsers, deleteUser } from "../api/platziClient";
+import toast from "react-hot-toast";
+import UserTableSkeleton from "../components/UserTableSkeleton";
+import ConfirmModal from "../components/ConfirmModal";
 
 const UserListPage = () => {
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
-  // Sorting
-  const [sortBy, setSortBy] = useState('name'); // name | email | role
-  const [sortDirection, setSortDirection] = useState('asc'); // asc | desc
-
-  // Delete modal
-  const [deleteTarget, setDeleteTarget] = useState(null);
-
-  const navigate = useNavigate();
-
   const loadUsers = async () => {
-    setLoading(true);
-    setError('');
     try {
+      setLoading(true);
       const res = await getUsers();
       setUsers(res.data);
     } catch (err) {
       console.error(err);
-      setError('Failed to load users');
-      toast.error('Failed to load users');
+      toast.error(
+        err.response?.data?.message || "Failed to load users. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -44,109 +39,79 @@ const UserListPage = () => {
     loadUsers();
   }, []);
 
-  const openDeleteModal = (user) => {
-    setDeleteTarget(user);
-  };
+  // Search + Filter
+  const normalizedSearch = searchTerm.toLowerCase();
 
-  const closeDeleteModal = () => {
-    setDeleteTarget(null);
-  };
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(normalizedSearch) ||
+      user.email.toLowerCase().includes(normalizedSearch);
+
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
+
+  // Pagination logic
+  const totalUsers = filteredUsers.length;
+  const totalPages = Math.ceil(totalUsers / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+
+  const openDeleteModal = (user) => setDeleteTarget(user);
+  const closeDeleteModal = () => setDeleteTarget(null);
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
       await deleteUser(deleteTarget.id);
+
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-      toast.success('User deleted successfully 👌');
+
+      toast.success("User deleted successfully");
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete user ❌');
+      toast.error(
+        err.response?.data?.message || "Failed to delete user. Try again."
+      );
     } finally {
       closeDeleteModal();
     }
   };
 
-  // Filter + search
-  const normalizedSearch = searchTerm.toLowerCase();
-
-  let filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(normalizedSearch) ||
-      user.email.toLowerCase().includes(normalizedSearch);
-    const matchesRole =
-      roleFilter === 'all' ? true : user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
-
-  // Sorting
-  filteredUsers = filteredUsers.sort((a, b) => {
-    const fieldA = (a[sortBy] || '').toString().toLowerCase();
-    const fieldB = (b[sortBy] || '').toString().toLowerCase();
-
-    if (fieldA < fieldB) return sortDirection === 'asc' ? -1 : 1;
-    if (fieldA > fieldB) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  // Pagination
-  const totalUsers = filteredUsers.length;
-  const totalPages = Math.ceil(totalUsers / pageSize) || 1;
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(1);
-    }
-  }, [totalPages, currentPage]);
-
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedUsers = filteredUsers.slice(
-    startIndex,
-    startIndex + pageSize
-  );
-
-  const changeSort = (field) => {
-    if (sortBy === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortIcon = (field) => {
-    if (sortBy !== field) return '↕';
-    return sortDirection === 'asc' ? '↑' : '↓';
-  };
-
-  if (loading) {
-    return <UserTableSkeleton />;
-  }
+  if (loading) return <UserTableSkeleton />;
 
   return (
     <div className="space-y-4">
+
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-300">
           Users
         </h1>
+
         <button
-          onClick={() => navigate('/users/new')}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          onClick={() => navigate("/users/new")}
+          className="rounded-md bg-indigo-600 text-white px-4 py-2 text-sm shadow hover:bg-indigo-700"
         >
           + Add User
         </button>
       </div>
 
-      {/* Search + Filter */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+      {/* Search + Filter Bar */}
+      <div className="bg-white dark:bg-gray-800 shadow p-4 rounded-lg flex flex-wrap gap-4 items-center">
         <div className="flex-1 min-w-[200px]">
-          <label className="mb-1 block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
             Search
           </label>
           <input
             type="text"
-            placeholder="Search by name or email..."
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            placeholder="Search by name or email"
+            className="w-full border dark:border-gray-600 dark:bg-gray-900 dark:text-white rounded-md px-3 py-2 text-sm"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -156,11 +121,11 @@ const UserListPage = () => {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
             Role
           </label>
           <select
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className="border dark:border-gray-600 dark:bg-gray-900 dark:text-white rounded-md px-3 py-2 text-sm"
             value={roleFilter}
             onChange={(e) => {
               setRoleFilter(e.target.value);
@@ -172,52 +137,21 @@ const UserListPage = () => {
             <option value="admin">Admin</option>
           </select>
         </div>
-
-        <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-          Showing{' '}
-          <span className="font-semibold">{paginatedUsers.length}</span> of{' '}
-          <span className="font-semibold">{filteredUsers.length}</span> users
-        </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-300">
-          {error}
-        </p>
-      )}
-
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl bg-white shadow dark:bg-gray-800">
-        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+      {/* TABLE (Desktop) */}
+      <div className="hidden md:block overflow-x-auto rounded-xl shadow bg-white dark:bg-gray-800">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/40">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                Avatar
-              </th>
-              <th
-                className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none"
-                onClick={() => changeSort('name')}
-              >
-                Name <span className="text-xs">{sortIcon('name')}</span>
-              </th>
-              <th
-                className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none"
-                onClick={() => changeSort('email')}
-              >
-                Email <span className="text-xs">{sortIcon('email')}</span>
-              </th>
-              <th
-                className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 cursor-pointer select-none"
-                onClick={() => changeSort('role')}
-              >
-                Role <span className="text-xs">{sortIcon('role')}</span>
-              </th>
-              <th className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
-                Actions
-              </th>
+              <th className="px-4 py-2 text-left">Avatar</th>
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Email</th>
+              <th className="px-4 py-2 text-left">Role</th>
+              <th className="px-4 py-2 text-right">Actions</th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {paginatedUsers.map((user) => (
               <tr key={user.id}>
@@ -228,25 +162,30 @@ const UserListPage = () => {
                     className="h-10 w-10 rounded-full object-cover"
                   />
                 </td>
-                <td className="px-4 py-2 font-medium text-gray-800 dark:text-gray-100">
+
+                <td className="px-4 py-2 font-medium dark:text-gray-200">
                   {user.name}
                 </td>
-                <td className="px-4 py-2 text-gray-600 dark:text-gray-300">
+
+                <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
                   {user.email}
                 </td>
-                <td className="px-4 py-2 text-gray-600 dark:text-gray-300 capitalize">
+
+                <td className="px-4 py-2 text-gray-600 dark:text-gray-400 capitalize">
                   {user.role}
                 </td>
-                <td className="px-4 py-2 text-right space-x-2">
+
+                <td className="px-4 py-2 text-right">
                   <button
                     onClick={() => navigate(`/users/${user.id}`)}
-                    className="rounded-md border border-yellow-400 px-3 py-1 text-xs font-medium text-yellow-700 hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-300 dark:hover:bg-yellow-900/30"
+                    className="border border-yellow-500 text-yellow-600 px-3 py-1 rounded-md text-xs mr-2 dark:text-yellow-400"
                   >
                     Edit
                   </button>
+
                   <button
                     onClick={() => openDeleteModal(user)}
-                    className="rounded-md border border-red-500 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-500 dark:text-red-300 dark:hover:bg-red-900/30"
+                    className="border border-red-500 text-red-500 px-3 py-1 rounded-md text-xs dark:text-red-300"
                   >
                     Delete
                   </button>
@@ -256,11 +195,8 @@ const UserListPage = () => {
 
             {paginatedUsers.length === 0 && (
               <tr>
-                <td
-                  colSpan="5"
-                  className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
-                >
-                  No users match your search / filter.
+                <td colSpan="5" className="text-center p-4 text-gray-500">
+                  No users found
                 </td>
               </tr>
             )}
@@ -268,50 +204,87 @@ const UserListPage = () => {
         </table>
       </div>
 
+      {/* MOBILE CARD VIEW */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {paginatedUsers.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 flex items-center gap-4"
+          >
+            <img
+              src={user.avatar}
+              className="h-14 w-14 rounded-full object-cover border"
+            />
+
+            <div className="flex-1">
+              <h2 className="font-semibold dark:text-white">{user.name}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {user.email}
+              </p>
+              <p className="text-xs mt-1 capitalize text-gray-600 dark:text-gray-400">
+                Role: {user.role}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate(`/users/${user.id}`)}
+                className="border border-yellow-500 text-yellow-600 text-xs px-2 py-1 rounded-md"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => openDeleteModal(user)}
+                className="border border-red-500 text-red-500 text-xs px-2 py-1 rounded-md"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="flex justify-center items-center gap-2 my-4">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
-            className="rounded-md border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="border px-3 py-1 rounded disabled:opacity-40 dark:border-gray-600 dark:text-gray-300"
           >
-            ← Prev
+            Prev
           </button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
-              key={num}
-              onClick={() => setCurrentPage(num)}
-              className={`rounded-md px-3 py-1 text-sm border ${
-                num === currentPage
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 dark:text-gray-100'
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`border px-3 py-1 rounded ${
+                page === currentPage
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
               }`}
             >
-              {num}
+              {page}
             </button>
           ))}
 
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="rounded-md border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-40 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="border px-3 py-1 rounded disabled:opacity-40 dark:border-gray-600 dark:text-gray-300"
           >
-            Next →
+            Next
           </button>
         </div>
       )}
 
-      {/* Delete confirmation modal */}
+      {/* DELETE CONFIRMATION */}
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete user"
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
-            : ''
-        }
+        title="Delete User"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"?`}
         onCancel={closeDeleteModal}
         onConfirm={confirmDelete}
       />
